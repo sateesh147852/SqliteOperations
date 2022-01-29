@@ -6,5 +6,7 @@ data class SalaryPerson(
     val age: Int,
     val gender: String,
     val location: String,
-    val salary: Double
+    val salary: Double,
+    val departmentName: String = "",
+    val departmentId: Int = 0
 )

@@ -14,4 +14,9 @@ object Constants {
     const val PERSON_ID: String = "id"
     const val PERSON_AGE: String = "age"
 
+    //Person Details Table
+    const val DEPARTMENT_TABLE_NAME : String = "DEPARTMENT_DETAILS"
+    const val DEPARTMENT_ID : String = "departmentId"
+    const val DEPARTMENT_NAME : String = "departmentName"
+
 }

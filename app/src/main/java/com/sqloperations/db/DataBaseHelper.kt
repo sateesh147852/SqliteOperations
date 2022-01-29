@@ -7,6 +7,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteException
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
+import com.sqloperations.model.DepartmentDetails
 import com.sqloperations.model.SalaryPerson
 import com.sqloperations.utils.Constants
 
@@ -16,7 +17,7 @@ class DatabaseHelper(context: Context) :
     private val TAG = "DatabaseHelper"
 
     override fun onCreate(database: SQLiteDatabase?) {
-        val CREATE_EXAMPLE_TABLE = "CREATE TABLE " + Constants.SALARY_TABLE_NAME + " (" +
+        val CREATE_SALARY_TABLE = "CREATE TABLE " + Constants.SALARY_TABLE_NAME + " (" +
                 Constants.PERSON_ID + " INTEGER PRIMARY KEY AUTOINCREMENT," +
                 Constants.PERSON_NAME + " TEXT," +
                 Constants.PERSON_AGE + " INTEGER NOT NULL," +
@@ -24,7 +25,12 @@ class DatabaseHelper(context: Context) :
                 Constants.LOCATION + " TEXT UNIQUE," +
                 Constants.PERSON_SALARY + " REAL)"
 
-        database?.execSQL(CREATE_EXAMPLE_TABLE)
+        val CREATE_DETAILS_TABLE = "CREATE TABLE " + Constants.DEPARTMENT_TABLE_NAME + " (" +
+                Constants.DEPARTMENT_ID + " INTEGER," +
+                Constants.DEPARTMENT_NAME + " TEXT NOT NULL )"
+
+        database?.execSQL(CREATE_SALARY_TABLE)
+        database?.execSQL(CREATE_DETAILS_TABLE)
     }
 
     override fun onUpgrade(database: SQLiteDatabase?, p1: Int, p2: Int) {
@@ -44,6 +50,14 @@ class DatabaseHelper(context: Context) :
         }
     }
 
+    fun insertDetailsData(details: DepartmentDetails) {
+        val database = writableDatabase
+        val contentValues = ContentValues()
+        contentValues.put(Constants.DEPARTMENT_ID, details.departmentId)
+        contentValues.put(Constants.DEPARTMENT_NAME, details.departmentName)
+        database.insert(Constants.DEPARTMENT_TABLE_NAME, null, contentValues)
+    }
+
     fun insertPeronData(salaryPerson: SalaryPerson) {
         val database = writableDatabase
         val contentValues = ContentValues()
@@ -56,7 +70,7 @@ class DatabaseHelper(context: Context) :
     }
 
     fun getPersonData(): List<SalaryPerson> {
-        val database = writableDatabase
+        val database = readableDatabase
         val values = ArrayList<SalaryPerson>()
         val getQuery =
             "SELECT * FROM ${Constants.SALARY_TABLE_NAME}"
@@ -84,17 +98,17 @@ class DatabaseHelper(context: Context) :
                 values.add(SalaryPerson(id, name, age, gender, location, salary))
             } while (cursor.moveToNext())
         }
+        cursor?.close()
         return values
     }
 
     fun getPersonAgeAndSalary(): List<SalaryPerson> {
-        val dataBase = writableDatabase
+        val dataBase = readableDatabase
         val values = ArrayList<SalaryPerson>()
         val salaryQuery =
-            "SELECT " + Constants.PERSON_AGE + "," + Constants.PERSON_SALARY + " " + "FROM " + Constants.SALARY_TABLE_NAME
-        var cursor: Cursor? = null
+            "SELECT " + Constants.PERSON_AGE + "," + Constants.PERSON_SALARY + " FROM " + Constants.SALARY_TABLE_NAME
 
-        cursor = dataBase.rawQuery(salaryQuery, null)
+        val cursor = dataBase.rawQuery(salaryQuery, null)
         if (cursor != null) {
             while (cursor.moveToNext()) {
 
@@ -111,104 +125,105 @@ class DatabaseHelper(context: Context) :
 
             }
         }
+        cursor.close()
         return values
     }
 
     fun getTotalSalary(): Double {
-        val dataBase = writableDatabase
+        val dataBase = readableDatabase
         val totalSalaryQuery =
-            "SELECT SUM " + "(" + Constants.PERSON_SALARY + ")" + " FROM " + Constants.SALARY_TABLE_NAME
-        var cursor: Cursor? = null
-        cursor = dataBase.rawQuery(totalSalaryQuery, null)
+            "SELECT SUM (" + Constants.PERSON_SALARY + ") FROM " + Constants.SALARY_TABLE_NAME
+        val cursor = dataBase.rawQuery(totalSalaryQuery, null)
         if (cursor != null && cursor.moveToFirst()) {
             return cursor.getDouble(0)
         }
+        cursor.close()
         return 0.0
     }
 
     fun getMaximumSalary(): Double {
-        val dataBase = writableDatabase
+        val dataBase = readableDatabase
         val totalSalaryQuery =
-            "SELECT MAX " + "(" + Constants.PERSON_SALARY + ")" + " FROM " + Constants.SALARY_TABLE_NAME
-        var cursor: Cursor? = null
-        cursor = dataBase.rawQuery(totalSalaryQuery, null)
+            "SELECT MAX (" + Constants.PERSON_SALARY + ") FROM " + Constants.SALARY_TABLE_NAME
+        val cursor = dataBase.rawQuery(totalSalaryQuery, null)
         if (cursor != null && cursor.moveToFirst()) {
             return cursor.getDouble(0)
         }
+        cursor.close()
         return 0.0
     }
 
     fun getMinimumSalary(): Double {
-        val dataBase = writableDatabase
+        val dataBase = readableDatabase
         val totalSalaryQuery =
-            "SELECT MIN " + "(" + Constants.PERSON_SALARY + ")" + " FROM " + Constants.SALARY_TABLE_NAME
-        var cursor: Cursor? = null
-        cursor = dataBase.rawQuery(totalSalaryQuery, null)
+            "SELECT MIN (" + Constants.PERSON_SALARY + ") FROM " + Constants.SALARY_TABLE_NAME
+        val cursor = dataBase.rawQuery(totalSalaryQuery, null)
         if (cursor != null && cursor.moveToFirst()) {
             return cursor.getDouble(0)
         }
+        cursor.close()
         return 0.0
     }
 
     fun getAverageSalary(): Double {
-        val dataBase = writableDatabase
+        val dataBase = readableDatabase
         val totalSalaryQuery =
-            "SELECT AVG " + "(" + Constants.PERSON_SALARY + ")" + " FROM " + Constants.SALARY_TABLE_NAME
-        var cursor: Cursor? = null
-        cursor = dataBase.rawQuery(totalSalaryQuery, null)
+            "SELECT AVG (" + Constants.PERSON_SALARY + ") FROM " + Constants.SALARY_TABLE_NAME
+        val cursor = dataBase.rawQuery(totalSalaryQuery, null)
         if (cursor != null && cursor.moveToFirst()) {
             return cursor.getDouble(0)
         }
+        cursor.close()
         return 0.0
     }
 
-    fun countSalary(): Double {
-        val dataBase = writableDatabase
+    fun countDistinctSalary(): Double {
+        val dataBase = readableDatabase
         val totalSalaryQuery =
-            "SELECT COUNT " + "( DISTINCT " + Constants.PERSON_SALARY + ")" + " as total FROM " + Constants.SALARY_TABLE_NAME
-        var cursor: Cursor? = null
-        cursor = dataBase.rawQuery(totalSalaryQuery, null)
+            "SELECT COUNT ( DISTINCT " + Constants.PERSON_SALARY + ") as total FROM " + Constants.SALARY_TABLE_NAME
+        val cursor = dataBase.rawQuery(totalSalaryQuery, null)
         if (cursor != null && cursor.moveToFirst()) {
             return cursor.getDouble(0)
         }
+        cursor.close()
         return 0.0
     }
 
     fun getRowCount(): Int {
-        val dataBase = writableDatabase
+        val dataBase = readableDatabase
         val totalSalaryQuery =
-            "SELECT COUNT " + "(*)" + " as total FROM " + Constants.SALARY_TABLE_NAME
-        var cursor: Cursor? = null
-        cursor = dataBase.rawQuery(totalSalaryQuery, null)
+            "SELECT COUNT (*) as total FROM " + Constants.SALARY_TABLE_NAME
+        val cursor = dataBase.rawQuery(totalSalaryQuery, null)
         if (cursor != null && cursor.moveToFirst()) {
             return cursor.getInt(0)
         }
+        cursor.close()
         return 0
     }
 
     fun getColumnIndex(): Int {
-        val dataBase = writableDatabase
+        val dataBase = readableDatabase
         val sqlQuery =
             "SELECT " + Constants.PERSON_NAME + "," + Constants.PERSON_SALARY + " FROM ${Constants.SALARY_TABLE_NAME}"
-        var cursor: Cursor? = null
-        cursor = dataBase.rawQuery(sqlQuery, null)
+        val cursor = dataBase.rawQuery(sqlQuery, null)
         if (cursor != null && cursor.moveToFirst()) {
             //return cursor.getColumnIndex(Constants.PERSON_NAME)  return 0
+            //return cursor.getColumnIndex(Constants.PERSON_ID) // return -1
             return cursor.getColumnIndex(Constants.PERSON_SALARY) // return 1
         }
-        return -1;
+        cursor.close()
+        return -1
     }
 
     fun runWhereAndClause(): ArrayList<SalaryPerson> {
 
-        val dataBase = writableDatabase
+        val dataBase = readableDatabase
         val data = ArrayList<SalaryPerson>()
         val sqlQuery =
             "SELECT * FROM " + Constants.SALARY_TABLE_NAME + " WHERE ${Constants.GENDER} = 'M' and ${Constants.PERSON_SALARY} = 65000"
         //"SELECT * FROM " + Constants.SALARY_TABLE_NAME + " WHERE ${Constants.GENDER} = 'M'"
-        var cursor: Cursor? = null
-        cursor = dataBase.rawQuery(sqlQuery, null)
-        if (cursor != null) {
+        val cursor: Cursor = dataBase.rawQuery(sqlQuery, null)
+        cursor.let {
             var id: Int
             var name: String
             var age: Int
@@ -225,17 +240,18 @@ class DatabaseHelper(context: Context) :
                 data.add(SalaryPerson(id, name, age, gender, location, salary))
             }
         }
+        cursor.close()
         return data
     }
 
     fun runWhereOrClause(): ArrayList<SalaryPerson> {
-        val dataBase = writableDatabase
+        val dataBase = readableDatabase
         val data = ArrayList<SalaryPerson>()
         val sqlQuery =
             "SELECT * FROM ${Constants.SALARY_TABLE_NAME} WHERE ${Constants.LOCATION} = 'Pune' OR ${Constants.LOCATION} = 'Hyderabad'"
-        var cursor: Cursor? = null
-        cursor = dataBase.rawQuery(sqlQuery, null)
-        if (cursor != null) {
+        val cursor = dataBase.rawQuery(sqlQuery, null)
+
+        cursor.let {
             var id: Int
             var name: String
             var age: Int
@@ -252,18 +268,18 @@ class DatabaseHelper(context: Context) :
                 data.add(SalaryPerson(id, name, age, gender, location, salary))
             }
         }
+        cursor.close()
         return data
     }
 
     fun betweenClause(): ArrayList<SalaryPerson> {
 
-        val dataBase = writableDatabase
+        val dataBase = readableDatabase
         val data = ArrayList<SalaryPerson>()
         val sqlQuery =
             "SELECT * FROM " + Constants.SALARY_TABLE_NAME + " WHERE ${Constants.PERSON_SALARY} between 70000 and 200000"
-        var cursor: Cursor? = null
-        cursor = dataBase.rawQuery(sqlQuery, null)
-        if (cursor != null) {
+        val cursor = dataBase.rawQuery(sqlQuery, null)
+        cursor.let {
             var id: Int
             var name: String
             var age: Int
@@ -280,17 +296,18 @@ class DatabaseHelper(context: Context) :
                 data.add(SalaryPerson(id, name, age, gender, location, salary))
             }
         }
+        cursor.close()
         return data
     }
 
+    //Not working
     fun whereGreaterAndLessQuery(): ArrayList<SalaryPerson> {
 
-        val dataBase = writableDatabase
+        val dataBase = readableDatabase
         val data = ArrayList<SalaryPerson>()
         val sqlQuery =
             "SELECT * FROM " + Constants.SALARY_TABLE_NAME + " WHERE ${Constants.PERSON_SALARY} > 70000 and ${Constants.PERSON_SALARY} < 250001"
-        var cursor: Cursor? = null
-        cursor = dataBase.rawQuery(sqlQuery, null)
+        val cursor = dataBase.rawQuery(sqlQuery, null)
         if (cursor != null) {
             var id: Int
             var name: String
@@ -308,19 +325,19 @@ class DatabaseHelper(context: Context) :
                 data.add(SalaryPerson(id, name, age, gender, location, salary))
             }
         }
+        cursor.close()
         return data
     }
 
 
     fun performTwentyPercentHike(): ArrayList<SalaryPerson> {
 
-        val dataBase = writableDatabase
+        val dataBase = readableDatabase
         val data = ArrayList<SalaryPerson>()
-        var cursor: Cursor? = null
         val percentageQuery =
             "SELECT salary + (salary * 0.2) as newSal FROM " + Constants.SALARY_TABLE_NAME
         // "SELECT salary + (1000) as newSal FROM " + Constants.SALARY_TABLE_NAME
-        cursor = dataBase.rawQuery(percentageQuery, null)
+        val cursor = dataBase.rawQuery(percentageQuery, null)
         if (cursor != null) {
             var salary: Double
             while (cursor.moveToNext()) {
@@ -328,15 +345,15 @@ class DatabaseHelper(context: Context) :
                 data.add(SalaryPerson(0, "", 0, "", "", salary))
             }
         }
+        cursor.close()
         return data
     }
 
     //Not working
     fun performTwentyPercentHike2(): ArrayList<SalaryPerson> {
 
-        val dataBase = writableDatabase
+        val dataBase = readableDatabase
         val data = ArrayList<SalaryPerson>()
-        var cursor: Cursor? = null
         val percentageQuery =
 
             "SELECT id,name,age,gender,location" +
@@ -350,7 +367,7 @@ class DatabaseHelper(context: Context) :
                 "end as newSal FROM " + Constants.SALARY_TABLE_NAME
 
 
-        cursor = dataBase.rawQuery(percentageQuery, null)
+        val cursor = dataBase.rawQuery(percentageQuery, null)
         if (cursor != null) {
             var id: Int
             var name: String
@@ -368,13 +385,14 @@ class DatabaseHelper(context: Context) :
                 data.add(SalaryPerson(id, name, age, gender, location, salary))
             }
         }
+        cursor.close()
         return data
 
     }
 
     // Group by
     fun getGenderStrength(): List<SalaryPerson> {
-        val database = writableDatabase
+        val database = readableDatabase
         val query =
             "SELECT gender, COUNT(*) as total FROM " + Constants.SALARY_TABLE_NAME + " GROUP BY " + Constants.GENDER
 
@@ -383,8 +401,7 @@ class DatabaseHelper(context: Context) :
 
         val data = ArrayList<SalaryPerson>()
 
-        var cursor: Cursor? = null
-        cursor = database.rawQuery(query, null)
+        val cursor = database.rawQuery(query, null)
         if (cursor != null) {
             var id: Int
             var gender: String
@@ -394,20 +411,20 @@ class DatabaseHelper(context: Context) :
                 data.add(SalaryPerson(id, "", 0, gender, "", 0.0))
             }
         }
+        cursor.close()
         return data
     }
 
     // Group by and having
     fun getGenderStrengthOfMoreThanTwo(): List<SalaryPerson> {
-        val database = writableDatabase
+        val database = readableDatabase
         val query =
             "SELECT gender, COUNT(*) as total FROM " + Constants.SALARY_TABLE_NAME + " GROUP BY " + Constants.GENDER +
                     " HAVING COUNT(*) > 1 " + "ORDER BY gender DESC"
 
         val data = ArrayList<SalaryPerson>()
 
-        var cursor: Cursor? = null
-        cursor = database.rawQuery(query, null)
+        val cursor = database.rawQuery(query, null)
         if (cursor != null) {
             var id: Int
             var location: String
@@ -417,19 +434,19 @@ class DatabaseHelper(context: Context) :
                 data.add(SalaryPerson(id, "", 0, "", location, 0.0))
             }
         }
+        cursor.close()
         return data
     }
 
     fun runInQuery(): ArrayList<SalaryPerson> {
 
-        val dataBase = writableDatabase
+        val dataBase = readableDatabase
         val data = ArrayList<SalaryPerson>()
         val sqlQuery =
 
-            "SELECT * FROM ${Constants.SALARY_TABLE_NAME} WHERE ${Constants.PERSON_SALARY} IN (65000,250000,100000)"
+            "SELECT * FROM ${Constants.SALARY_TABLE_NAME} WHERE ${Constants.PERSON_SALARY} (65000,250000,100000)"
 
-        var cursor: Cursor? = null
-        cursor = dataBase.rawQuery(sqlQuery, null)
+        val cursor = dataBase.rawQuery(sqlQuery, null)
         if (cursor != null) {
             var id: Int
             var name: String
@@ -447,6 +464,7 @@ class DatabaseHelper(context: Context) :
                 data.add(SalaryPerson(id, name, age, gender, location, salary))
             }
         }
+        cursor.close()
         return data
 
     }
@@ -454,14 +472,13 @@ class DatabaseHelper(context: Context) :
 
     fun runSubQuery(): ArrayList<SalaryPerson> {
 
-        val dataBase = writableDatabase
+        val dataBase = readableDatabase
         val data = ArrayList<SalaryPerson>()
         val sqlQuery =
 
             "SELECT * FROM ${Constants.SALARY_TABLE_NAME} WHERE ${Constants.PERSON_SALARY} = (SELECT MIN (${Constants.PERSON_SALARY}) FROM ${Constants.SALARY_TABLE_NAME})"
 
-        var cursor: Cursor? = null
-        cursor = dataBase.rawQuery(sqlQuery, null)
+        val cursor = dataBase.rawQuery(sqlQuery, null)
         if (cursor != null) {
             var id: Int
             var name: String
@@ -479,21 +496,21 @@ class DatabaseHelper(context: Context) :
                 data.add(SalaryPerson(id, name, age, gender, location, salary))
             }
         }
+        cursor.close()
         return data
 
     }
 
 
-    fun runSubQueryWithWhereClause() : List<SalaryPerson> {
+    fun runSubQueryWithWhereClause(): List<SalaryPerson> {
 
-        val dataBase = writableDatabase
+        val dataBase = readableDatabase
         val data = ArrayList<SalaryPerson>()
         val sqlQuery =
 
             "SELECT * FROM ${Constants.SALARY_TABLE_NAME} WHERE ${Constants.PERSON_SALARY} = (SELECT MAX(${Constants.PERSON_SALARY}) FROM ${Constants.SALARY_TABLE_NAME} WHERE ${Constants.GENDER} = 'M')"
 
-        var cursor: Cursor? = null
-        cursor = dataBase.rawQuery(sqlQuery, null)
+        val cursor = dataBase.rawQuery(sqlQuery, null)
         if (cursor != null) {
             var id: Int
             var name: String
@@ -511,20 +528,19 @@ class DatabaseHelper(context: Context) :
                 data.add(SalaryPerson(id, name, age, gender, location, salary))
             }
         }
+        cursor.close()
         return data
 
     }
 
-    fun getPersonAgeAndSalaryWithReference(): List<SalaryPerson> {
-        val dataBase = writableDatabase
+    fun getPersonAgeNameAndGenderWithReference(): List<SalaryPerson> {
+        val dataBase = readableDatabase
         val values = ArrayList<SalaryPerson>()
         val salaryQuery =
 
             "SELECT P.age, P.name, P.gender FROM ${Constants.SALARY_TABLE_NAME} P"
 
-        var cursor: Cursor? = null
-
-        cursor = dataBase.rawQuery(salaryQuery, null)
+        val cursor = dataBase.rawQuery(salaryQuery, null)
         if (cursor != null) {
             while (cursor.moveToNext()) {
 
@@ -541,10 +557,183 @@ class DatabaseHelper(context: Context) :
 
             }
         }
+        cursor.close()
         return values
     }
 
+    //find average salary of gender
+    fun getAverageSalaryOfTheGender(): List<SalaryPerson> {
+        val database = readableDatabase
+        val data = ArrayList<SalaryPerson>()
+        val sqlQuery =
+            "SELECT ${Constants.GENDER} , AVG(${Constants.PERSON_SALARY}) as average_salary FROM ${Constants.SALARY_TABLE_NAME} GROUP BY ${Constants.GENDER}"
+        val cursor = database.rawQuery(sqlQuery, null)
+        if (cursor != null) {
+            while (cursor.moveToNext()) {
+                val salaryPerson =
+                    SalaryPerson(
+                        age = 0,
+                        salary = cursor.getDouble(1),
+                        id = 0,
+                        name = cursor.getString(0),
+                        gender = "",
+                        location = ""
+                    )
+                data.add(salaryPerson)
+            }
+        }
+        cursor.close()
+        return data
+    }
 
+    fun getDataFromTwoTable(): List<SalaryPerson> {
+        val database = readableDatabase
+        val data = ArrayList<SalaryPerson>()
+        val query =
+            "SELECT P.name, D.departmentName, D.departmentId , P.id FROM ${Constants.SALARY_TABLE_NAME} P, ${Constants.DEPARTMENT_TABLE_NAME} D WHERE P.id = D.departmentId"
+        val cursor: Cursor = database.rawQuery(query, null)
+        cursor.let {
+            while (cursor.moveToNext()) {
+
+                val salaryPerson =
+                    SalaryPerson(
+                        age = 0,
+                        salary = 0.0,
+                        id = cursor.getInt(3),
+                        name = cursor.getString(0),
+                        gender = "",
+                        location = "",
+                        departmentName = cursor.getString(1),
+                        departmentId = cursor.getInt(2)
+                    )
+                data.add(salaryPerson)
+            }
+        }
+        cursor.close()
+        return data
+    }
+
+    fun getDepartmentWiseStrength(): List<SalaryPerson> {
+        val database = readableDatabase
+        val data = ArrayList<SalaryPerson>()
+        val query =
+            "SELECT D.departmentName, count(*) FROM ${Constants.SALARY_TABLE_NAME} P, ${Constants.DEPARTMENT_TABLE_NAME} D WHERE P.location = D.departmentName GROUP BY D.departmentName"
+        val cursor = database.rawQuery(query, null)
+        cursor.let {
+            while (cursor.moveToNext()) {
+                val salaryPerson =
+                    SalaryPerson(
+                        age = 0,
+                        salary = 0.0,
+                        id = 0,
+                        name = "",
+                        gender = "",
+                        location = "",
+                        departmentName = cursor.getString(0),
+                        departmentId = cursor.getInt(1)  // count
+                    )
+                data.add(salaryPerson)
+            }
+        }
+        cursor.close()
+        return data
+    }
+
+    fun getDepartmentWiseStrengthHasMoreThanOne(): List<SalaryPerson> {
+        val database = readableDatabase
+        val data = ArrayList<SalaryPerson>()
+        val query =
+            "SELECT D.departmentName, count(*) FROM ${Constants.SALARY_TABLE_NAME} P, ${Constants.DEPARTMENT_TABLE_NAME} D WHERE P.location = D.departmentName GROUP BY D.departmentName HAVING COUNT(*)>1"
+        val cursor = database.rawQuery(query, null)
+        cursor.let {
+            while (cursor.moveToNext()) {
+                val salaryPerson =
+                    SalaryPerson(
+                        age = 0,
+                        salary = 0.0,
+                        id = 0,
+                        name = "",
+                        gender = "",
+                        location = "",
+                        departmentName = cursor.getString(0),
+                        departmentId = cursor.getInt(1)  // count
+                    )
+                data.add(salaryPerson)
+            }
+        }
+        cursor.close()
+        return data
+    }
+
+    //Like operator
+    fun getDataByLikeOperator(): List<SalaryPerson> {
+        val database = readableDatabase
+        val data = ArrayList<SalaryPerson>()
+        val query =
+            "SELECT * FROM ${Constants.SALARY_TABLE_NAME} WHERE ${Constants.PERSON_NAME} like '%a_'"
+        val cursor = database.rawQuery(query, null)
+        cursor.let {
+            while (cursor.moveToNext()) {
+                val salaryPerson =
+                    SalaryPerson(
+                        id = cursor.getInt(0),
+                        name = cursor.getString(1),
+                        age = cursor.getInt(2),
+                        gender = cursor.getString(3),
+                        location = cursor.getString(3),
+                        salary = cursor.getDouble(4),
+                    )
+                data.add(salaryPerson)
+            }
+        }
+        cursor.close()
+        return data
+    }
+
+    fun convertNamesToUpperCase(): List<String> {
+        val database = readableDatabase
+        val data = ArrayList<String>()
+        //val query = "SELECT UPPER(${Constants.PERSON_NAME}) FROM ${Constants.SALARY_TABLE_NAME}"
+        //val query = "SELECT LOWER(${Constants.PERSON_NAME}) FROM ${Constants.SALARY_TABLE_NAME}"
+        //val query = "SELECT LENGTH(${Constants.PERSON_NAME}) FROM ${Constants.SALARY_TABLE_NAME}"
+
+        //val query = "SELECT SUBSTR(${Constants.PERSON_NAME},1) FROM ${Constants.SALARY_TABLE_NAME}" //Complete name
+        //val query = "SELECT SUBSTR(${Constants.PERSON_NAME},0) FROM ${Constants.SALARY_TABLE_NAME}" //Complete name
+        //val query = "SELECT SUBSTR(${Constants.PERSON_NAME},1,5) FROM ${Constants.SALARY_TABLE_NAME}" //5 chars from starting
+
+        //val query = "SELECT SUBSTR(${Constants.PERSON_NAME},-1) FROM ${Constants.SALARY_TABLE_NAME}" //last character
+        //val query = "SELECT SUBSTR(${Constants.PERSON_NAME},-5) FROM ${Constants.SALARY_TABLE_NAME}" //last 5 character "kumar"
+        //val query = "SELECT SUBSTR(${Constants.PERSON_NAME},-5,3) FROM ${Constants.SALARY_TABLE_NAME}" //from last 5th position to right side character "kum"
+        //val query = "SELECT SUBSTR(${Constants.PERSON_NAME},-5,-3) FROM ${Constants.SALARY_TABLE_NAME}" //(3 chars) from 6th position to the left side
+
+        //val query = "SELECT UPPER(SUBSTR(${Constants.PERSON_NAME},1,5)) FROM ${Constants.SALARY_TABLE_NAME}"
+        //val query = "SELECT LOWER(SUBSTR(${Constants.PERSON_NAME},1,5)) FROM ${Constants.SALARY_TABLE_NAME}"
+        val query =
+            "SELECT LENGTH(SUBSTR(${Constants.PERSON_NAME},1,20)) FROM ${Constants.SALARY_TABLE_NAME}"
+
+        val cursor: Cursor = database.rawQuery(query, null)
+        cursor.let {
+            while (cursor.moveToNext()) {
+                data.add(cursor.getString(0))
+            }
+        }
+        cursor.close()
+        return data
+    }
+
+    fun getLimitedData(): List<Int> {
+        val database = readableDatabase
+        val data = ArrayList<Int>()
+        val query = "SELECT * FROM ${Constants.SALARY_TABLE_NAME} LIMIT 3"
+        val cursor = database.rawQuery(query, null)
+        cursor.let {
+            while (cursor.moveToNext()) {
+                data.add(cursor.getInt(0))
+            }
+        }
+        cursor.close()
+        return data
+    }
 
 
 }
